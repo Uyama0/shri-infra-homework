@@ -32,13 +32,13 @@ jobs:
     needs: [lint, test]
     steps:
         - uses: actions/checkout@v4
-        # - name: Create release branch
-        #   run: |
-        #     git config --global user.name "github-actions[bot]"
-        #     git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        #     RELEASE_BRANCH="releases/${{ github.run_number }}"
-        #     git checkout -b $RELEASE_BRANCH
-        #     git push origin $RELEASE_BRANCH
+        - name: Create release branch
+          run: |
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            RELEASE_BRANCH="releases/${{ github.run_number }}"
+            git checkout -b $RELEASE_BRANCH
+            git push origin $RELEASE_BRANCH
 
   build_docker_image:
     name: Build docker image
@@ -53,5 +53,10 @@ jobs:
       - name: Build docker image
         run: docker build . -t cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
 
+      - name: Tag docker image
+        run: docker build . -t cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}  
+
       - name: Push docker image
-        run: docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
+        run: |
+          docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
+          docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}_latest
