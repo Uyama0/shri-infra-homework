@@ -70,6 +70,8 @@ jobs:
           run: |
             git config --global user.name "github-actions[bot]"
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            TAG_NAME="tag ${{ github.run_number }}"
+
+            TAG_NAME="v${{ github.run_number }}"
+            
             git tag -a $TAG_NAME -m "Tag created by GitHub Actions"
             git push origin $TAG_NAME
