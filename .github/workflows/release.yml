@@ -54,7 +54,9 @@ jobs:
         run: docker build . -t cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
 
       - name: Tag docker image
-        run: docker build . -t cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}  
+        run: |
+          docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}  
+          docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}_latest 
 
       - name: Push docker image
         run: |
