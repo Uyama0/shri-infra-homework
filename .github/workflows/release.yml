@@ -54,9 +54,22 @@ jobs:
         run: docker build . -t cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
 
       - name: Tag docker image
-        run: docker tag cr.yandex/${{ secrets.YANDEX_CONTAINER_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANDEX_CONTAINER_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+        run: docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Push docker image
         run: |
           docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
           docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          
+  create_github_tag:
+    runs-on: ubuntu-latest
+    needs: [build_docker_image]
+    steps:
+        - uses: actions/checkout@v4
+        - name: Create github tag
+          run: |
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            TAG_NAME="tag ${{ github.run_number }}"
+            git tag -a $TAG_NAME -m "Tag created by GitHub Actions"
+            git push origin $TAG_NAME
