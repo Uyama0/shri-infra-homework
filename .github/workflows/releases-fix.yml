@@ -10,7 +10,7 @@ on:
 jobs:
   release-fix:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,7 +19,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"      
           RELEASE_BRANCH="release/${{ github.event.inputs.release_version }}"
-          
+
           git fetch origin
           git checkout -b $RELEASE_BRANCH
 
@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: "20"
       - run: npm ci
-      - run: npm run test   
+      - run: npm run test
 
   build_docker_image:
     needs: [test, lint]
@@ -63,25 +63,26 @@ jobs:
       - name: Tag docker image
         run: |
           docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }} cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
-          docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }} cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_latest  
+          docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }} cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_latest
 
       - name: Push docker image
         run: |
           docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
-          docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_latest   
+          docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_latest
 
   create_github_tag:
+    name: Create github tag
     runs-on: ubuntu-latest
     needs: [build_docker_image]
     steps:
-        - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-        - name: Create github tag
-          run: |
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Create github tag
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-            TAG_NAME="v${{ github.event.inputs.release_version }}_fix${{ github.run_number }}"
+          TAG_NAME="v${{ github.event.inputs.release_version }}_fix${{ github.run_number }}"
 
-            git tag -a $TAG_NAME -m "Tag created by GitHub Actions"
-            git push origin $TAG_NAME
+          git tag -a $TAG_NAME -m "Tag created by GitHub Actions"
+          git push origin $TAG_NAME

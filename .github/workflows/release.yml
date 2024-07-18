@@ -78,3 +78,18 @@ jobs:
 
             git tag -a $TAG_NAME -m "Tag created by GitHub Actions"
             git push origin $TAG_NAME
+
+  create_github_issue:
+    runs-on: ubuntu-latest
+    needs: [create_github_tag]
+    steps:
+        - uses: actions/checkout@v4
+
+        - name: Create github issue
+          uses: dacbd/create-issue-action@v2.0.0
+          with:
+            repo-token: ${{ secrets.GH_TOKEN }}
+            issue-title: Release Issue
+            issue-body: |
+              Release created by ${{ github.actor }} on $(date +%Y-%m-%d)
+            
