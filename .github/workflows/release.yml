@@ -88,7 +88,6 @@ jobs:
       - name: Create github issue
         uses: dacbd/create-issue-action@v2.0.0
         with:
-          token: ${{ secrets.GH_TOKEN }}
-          title: Release Issue
-          body: |
-            Release created by ${{ github.actor }} on $(date +%Y-%m-%d)
+          token: ${{ github.token }}
+          title: Simple test issue
+          body: my new issue
