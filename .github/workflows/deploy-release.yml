@@ -1,0 +1,19 @@
+name: deploy-Release
+
+on:
+    workflow_dispatch:
+      inputs:
+        release_version:
+          description: "Release version"
+          required: true
+
+jobs:
+  deploy:
+    name: Deploy release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      
+
+
