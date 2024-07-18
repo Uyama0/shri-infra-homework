@@ -1,0 +1,72 @@
+name: release-fix
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Release version"
+        required: true
+
+jobs:
+  release-fix:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/version@v4
+
+      - name: Switch to  release branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"      
+          RELEASE_BRANCH="release/${{ github.event.inputs.release_version }}"
+          
+          git fetch origin
+          git checkout -b $RELEASE_BRANCH
+
+  lint:
+    needs: [release-fix]
+    name: Run lints
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    needs: [release-fix]
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm run test   
+
+  build_docker_image:
+    needs: [test, lint]
+    name: Build docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yandex cloud auth
+        run: docker login --username oauth --password ${{ secrets.YA_CR_OAUTH_TOKEN }} cr.yandex
+
+      - name: Build docker image
+        run: docker build . -t cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}
+
+      - name: Tag docker image
+        run: |
+          docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }} cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
+          docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }} cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_latest  
+
+      - name: Push docker image
+        run: |
+          docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
+          docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_latest   
+
