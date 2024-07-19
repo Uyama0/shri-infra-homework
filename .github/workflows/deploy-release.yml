@@ -12,11 +12,11 @@ jobs:
     name: Deploy release
     runs-on: ubuntu-latest
     steps:
-      - uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.YA_VM_PUBLIC_IP }}
-          username: shri-hw 
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+      # - uses: appleboy/ssh-action@master
+      - name: Deploy release
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} ${{ secrets.SSH_USERNAME }}@${{ secrets.YA_VM_PUBLIC_IP }} << 'EOF'
+          
           
 
       
