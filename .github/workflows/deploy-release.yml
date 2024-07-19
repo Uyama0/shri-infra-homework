@@ -16,11 +16,8 @@ jobs:
         with:
           host: ${{ secrets.YA_VM_PUBLIC_IP }}
           username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          scripts: |
-            sudo groupadd docker
-            sudo usermod -aG docker ${USER}
-            echo ${{ secrets.YA_CR_OAUTH_TOKEN }} | docker login --username oauth --password-stdin cr.yandex
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
 
       
 
