@@ -15,7 +15,7 @@ jobs:
       - uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.YA_VM_PUBLIC_IP }}
-          username: ${{ secrets.SSH_USERNAME }}
+          username: ${{ secrets.shri-hw }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           
 
