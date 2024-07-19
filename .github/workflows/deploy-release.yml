@@ -19,11 +19,10 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "Logging in to YC"
+            sudo groupadd docker
+            sudo usermod -aG docker ${USER}
             docker login --username oauth --password ${{ secrets.YA_CR_OAUTH_TOKEN }} cr.yandex
-            docker pull cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.event.inputs.release_version }}_latest
-            docker kill $(docker ps -q)
-            docker rm $(docker ps -a -q)
-            docker run -d --restart unless-stopped -p 3000:3000 cr.yandex/${{secrets.YA_REGISTRY_ID}}/app:${{ inputs.release_version }}_latest
+
           
           
 
