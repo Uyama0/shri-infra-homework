@@ -19,8 +19,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "Logging in to YC"
-            sudo groupadd docker
-            sudo usermod -aG docker ${USER}
+            sudo usermod -a -G docker $USER
             docker login --username oauth --password ${{ secrets.YA_CR_OAUTH_TOKEN }} cr.yandex
 
           
