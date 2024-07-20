@@ -85,9 +85,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Get current timestam
+        run: echo "date=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+
+      - name: Get latest tag
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0)
+          echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
+
+      - name: Get commit history
+        run: |
+          commit_history=$(git log ${latest_tag}..HEAD --pretty=format:"- %s")
+          echo "commit_history=${commit_history}" >> $GITHUB_ENV
+
       - name: Create github issue
         uses: dacbd/create-issue-action@main
+        
         with:
           token: ${{ github.token }}
-          title: Simple test issue
-          body: my new issue
+          title: Release ${{ github.run_number }}
+          body: |
+            - Date: ${{ env.date }}
+            - Release author: ${{ github.triggering_actor }}
+            - Release version: ${{ github.run_number }}
+            - Commits history: ${{ env.commit_history }}
+            - Docker: cr.yandex/${{secrets.YC_REGISTRY_ID}}/app:${{ github.run_number }}   
