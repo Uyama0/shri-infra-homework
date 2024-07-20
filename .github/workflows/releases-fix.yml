@@ -86,3 +86,39 @@ jobs:
 
           git tag -a $TAG_NAME -m "Tag created by GitHub Actions"
           git push origin $TAG_NAME
+
+  create_github_issue:
+    runs-on: ubuntu-latest
+    needs: [create_github_tag]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get current timestam
+        run: echo "date=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+
+      - name: Get previous tag
+        run: |
+          prev_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')
+          echo "prev_tag=${prev_tag}" >> $GITHUB_ENV
+      
+      - name: Get commit history
+        run: |
+          if [ -n "${{ env.prev_tag }}" ]; then
+            commit_history=$(git log "${{ env.prev_tag }}"..HEAD --pretty=format:"- %h: %s")
+          else
+            commit_history=$(git log HEAD --pretty=format:"- %h: %s")
+          fi
+          echo "commit_history=${commit_history}" >> $GITHUB_ENV
+
+      - name: Create github issue
+        uses: dacbd/create-issue-action@main
+        
+        with:
+          token: ${{ github.token }}
+          title: Fix ${{ github.run_number }}
+          body: |
+            - Date: ${{ env.date }}
+            - Fix author: ${{ github.triggering_actor }}
+            - Commits history:
+              ${{ env.commit_history }}
+            - Docker: cr.yandex/${{secrets.YC_REGISTRY_ID}}/app:${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
