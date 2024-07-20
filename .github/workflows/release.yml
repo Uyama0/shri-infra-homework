@@ -86,7 +86,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Create github issue
-        uses: dacbd/create-issue-action@v2.0.0
+        uses: dacbd/create-issue-action@main
         with:
           token: ${{ github.token }}
           title: Simple test issue
