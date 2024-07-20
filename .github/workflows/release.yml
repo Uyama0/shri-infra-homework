@@ -139,7 +139,7 @@ jobs:
       - name: Update changelog
         run: |
           echo "## Release ${{ github.run_number }}" > updated_changelog.md
-          echo "${{ steps.get-commits.outputs.commits }}" >> updated_changelog.md
+          echo "${{ env.commit_history }}" >> updated_changelog.md
           cat CHANGELOG.md >> updated_changelog.md
           mv updated_changelog.md CHANGELOG.md
 
