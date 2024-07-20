@@ -146,6 +146,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+          RELEASE_BRANCH="releases/${{ github.run_number }}"
+
           git add CHANGELOG.md
-          git commit -m "Update CHANGELOG.md for release ${{ github.run_number }}"
-          git push origin HEAD:main
+          git commit -m "Update changelog ${{ github.run_number }}"
+          
+          git checkout -b $RELEASE_BRANCH
+          git push origin $RELEASE_BRANCH
+
+        
