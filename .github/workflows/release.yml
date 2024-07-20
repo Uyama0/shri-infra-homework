@@ -99,7 +99,11 @@ jobs:
 
       - name: Get commit history
         run: |
-          commit_history=$(git log ${latest_tag}..HEAD --pretty=format:"- %s")
+          if [ -z "${{ env.latest_tag }}" ]; then
+            commit_history=$(git log HEAD --pretty=format:"- %s")
+          else
+            commit_history=$(git log ${latest_tag}..HEAD --pretty=format:"- %s")
+          fi
           echo "commit_history=${commit_history}" >> $GITHUB_ENV
 
       - name: Create github issue
@@ -112,5 +116,6 @@ jobs:
             - Date: ${{ env.date }}
             - Release author: ${{ github.triggering_actor }}
             - Release version: ${{ github.run_number }}
-            - Commits history: ${{ env.commit_history }}
+            - Commits history:
+              ${{ env.commit_history }}
             - Docker: cr.yandex/${{secrets.YC_REGISTRY_ID}}/app:${{ github.run_number }}   
