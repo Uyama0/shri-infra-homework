@@ -155,9 +155,9 @@ jobs:
           git push origin $RELEASE_BRANCH
 
           echo "${{ github.token }}" | gh auth login --with-token
-          PR_URL=$(gh pr create --title "Update CHANGELOG.md for release ${{ github.run_number }}" --body "This PR updates the CHANGELOG.md for release ${{ github.run_number }}" --head $RELEASE_BRANCH --base main --json url -q '.url')
+          gh pr create --title "Update CHANGELOG.md for release ${{ github.run_number }}" --body "This PR updates the CHANGELOG.md for release ${{ github.run_number }}" --head $RELEASE_BRANCH --base main
 
-          PR_NUMBER=$(basename $PR_URL | sed 's/pr\///')
+          PR_NUMBER=$(gh pr list --head $RELEASE_BRANCH --json number -q '.[0].number')
 
           echo "PR URL: $PR_URL"
           echo "PR Number: $PR_NUMBER"
