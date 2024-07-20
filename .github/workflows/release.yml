@@ -90,7 +90,11 @@ jobs:
 
       - name: Get latest tag
         run: |
-          latest_tag=$(git describe --tags --abbrev=0)
+          if git describe --tags --abbrev=0 > /dev/null 2>&1; then
+            latest_tag=$(git describe --tags --abbrev=0)
+          else
+            latest_tag=""
+          fi
           echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
 
       - name: Get commit history
