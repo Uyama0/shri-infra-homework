@@ -25,7 +25,25 @@ jobs:
             docker pull cr.yandex/${{secrets.YA_REGISTRY_ID}}/app:${{ inputs.release_version }}_latest
             docker run -d --restart unless-stopped -p 3000:3000 cr.yandex/${{secrets.YA_REGISTRY_ID}}/app:${{ inputs.release_version }}_latest
 
-          
+  create_github_issue:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get current timestam
+        run: echo "date=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+      
+      - name: Create github issue
+        uses: dacbd/create-issue-action@main
+        
+        with:
+          token: ${{ github.token }}
+          title: New production release
+          body: |
+            - Date: ${{ env.date }}
+            - Prod release author: ${{ github.triggering_actor }}
+            - **Note:** New production release.
           
 
       
