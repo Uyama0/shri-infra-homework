@@ -123,19 +123,19 @@ jobs:
   #         fi
   #         echo "commit_history=${commit_history}" >> $GITHUB_ENV
 
-  #     - name: Create github issue
-  #       uses: dacbd/create-issue-action@main
+      - name: Create github issue
+        uses: dacbd/create-issue-action@main
         
-  #       with:
-  #         token: ${{ github.token }}
-  #         title: Release ${{ github.run_number }}
-  #         body: |
-  #           - Date: ${{ env.date }}
-  #           - Release author: ${{ github.triggering_actor }}
-  #           - Release version: ${{ github.run_number }}
-  #           - Commits history:
-  #             ${{ env.commit_history }}
-  #           - Docker: cr.yandex/${{secrets.YC_REGISTRY_ID}}/app:${{ github.run_number }}
+        with:
+          token: ${{ github.token }}
+          title: Release ${{ github.run_number }}
+          body: |
+            - Date: ${{ env.date }}
+            - Release author: ${{ github.triggering_actor }}
+            - Release version: ${{ github.run_number }}
+            - Commits history:
+              ${{ env.commit_history }}
+            - Docker: cr.yandex/${{secrets.YC_REGISTRY_ID}}/app:${{ github.run_number }}
 
   # update-release:
   #   runs-on: ubuntu-latest
