@@ -23,6 +23,10 @@ jobs:
             docker login --username oauth --password ${{ secrets.YA_CR_OAUTH_TOKEN }} cr.yandex
 
             docker pull cr.yandex/${{secrets.YA_REGISTRY_ID}}/app:${{ inputs.release_version }}_latest
+            
+            docker stop $(docker ps -q) || true
+            docker rm $(docker ps -a -q) || true
+
             docker run -d --restart unless-stopped -p 3000:3000 cr.yandex/${{secrets.YA_REGISTRY_ID}}/app:${{ inputs.release_version }}_latest
 
   create_github_issue:
