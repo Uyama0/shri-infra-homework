@@ -136,32 +136,53 @@ jobs:
           fi
           echo "commit_history=${commit_history}" >> $GITHUB_ENV
 
-      - name: Update changelog
+          - name: Update changelog
+          run: |
+            echo "## Release ${{ github.run_number }}" > updated_changelog.md
+            echo "${{ env.commit_history }}" >> updated_changelog.md
+            cat CHANGELOG.md >> updated_changelog.md
+            mv updated_changelog.md CHANGELOG.md
+  
+      - name: Configure Git
         run: |
-          echo "## Release ${{ github.run_number }}" > updated_changelog.md
-          echo "${{ env.commit_history }}" >> updated_changelog.md
-          cat CHANGELOG.md >> updated_changelog.md
-          mv updated_changelog.md CHANGELOG.md
-
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
+  
+      - name: Commit changelog
+        run: |
           RELEASE_BRANCH="releases/${{ github.run_number }}"
 
           git add CHANGELOG.md
           git commit -m "Update changelog ${{ github.run_number }}"
-          
           git checkout -b $RELEASE_BRANCH
           git push origin $RELEASE_BRANCH
+        env:
+          RELEASE_BRANCH: releases/${{ github.run_number }}
 
-          echo "${{ github.token }}" | gh auth login --with-token
-          gh pr create --title "Update CHANGELOG.md for release ${{ github.run_number }}" --body "This PR updates the CHANGELOG.md for release ${{ github.run_number }}" --head $RELEASE_BRANCH --base main
+      - name: Authenticate with GitHub CLI
+        run: echo "${{ secrets.PAT }}" | gh auth login --with-token
 
-          PR_NUMBER=$(gh pr list --head $RELEASE_BRANCH --json number -q '.[0].number')
+      - name: Create Pull Request
+        run: |
+          RELEASE_BRANCH="releases/${{ github.run_number }}"
+          gh pr create \
+            --title "Update CHANGELOG.md for release ${{ github.run_number }}" \
+            --body "This PR updates the CHANGELOG.md for release ${{ github.run_number }}" \
+            --head $RELEASE_BRANCH \
+            --base main
+        env:
+          RELEASE_BRANCH: releases/${{ github.run_number }}
 
-          echo "PR URL: $PR_URL"
-          echo "PR Number: $PR_NUMBER"
+      - name: Get PR Number
+        id: get-pr-number
+        run: |
+          PR_NUMBER=$(gh pr list --head releases/${{ github.run_number }} --json number -q '.[0].number')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-          gh pr review $PR_NUMBER --approve --body "Automatically approved by GitHub Actions"
+      - name: Approve Pull Request
+        run: |
+          gh pr review ${{ env.PR_NUMBER }} --approve --body "Automatically approved by GitHub Actions"
 
-          gh pr merge $PR_NUMBER --admin --squash --delete-branch
+      - name: Merge Pull Request
+        run: |
+          gh pr merge ${{ env.PR_NUMBER }} --admin --squash --delete-branch
