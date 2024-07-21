@@ -102,9 +102,10 @@ jobs:
             if [ -z "$prev_tag" ]; then
               commit_history=$(git log --all --oneline --pretty=format:"* %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" $latest_tag)
             else
-              commit_history=$(git log --all --oneline --pretty=format:"* %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" $previous_tag..$latest_tag)
+              commit_history=$(git log --all --oneline --pretty=format:"* %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" $prev_tag..$latest_tag)
             fi
             echo "commit_history=${commit_history}" >> $GITHUB_ENV
+          fi
             
       - name: Output commit history
         run: |
