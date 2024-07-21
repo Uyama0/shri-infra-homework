@@ -96,17 +96,23 @@ jobs:
       - name: Get current timestam
         run: echo "date=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
 
-      - name: Get previous tag
+      - name: Get previous and latest tags
         run: |
-          prev_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')
+          latest_tag=$(git tag --sort=-creatordate | sed -n '1p')
+          prev_tag=$(git tag --sort=-creatordate | sed -n '2p')
+          echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
           echo "prev_tag=${prev_tag}" >> $GITHUB_ENV
       
       - name: Get commit history
         run: |
-          if [ -n "${{ env.prev_tag }}" ]; then
-            commit_history=$(git log "${{ env.prev_tag }}"..HEAD --pretty=format:"- %h: %s")
+          if [ -n "${{ env.latest_tag }}" ]; then
+            if [ -n "${{ env.prev_tag }}" ]; then
+              commit_history=$(git log "${{ env.prev_tag }}"..${{ env.latest_tag }} --pretty=format:"- %h: %s")
+            else
+              commit_history=$(git log --pretty=format:"- %h: %s" "${{ env.latest_tag }}")
+            fi
           else
-            commit_history=$(git log HEAD --pretty=format:"- %h: %s")
+            commit_history=$(git log --pretty=format:"- %h: %s")
           fi
           echo "commit_history=${commit_history}" >> $GITHUB_ENV
 
