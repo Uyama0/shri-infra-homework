@@ -26,62 +26,62 @@ jobs:
       - run: npm ci
       - run: npm run test
 
-  create_release_branch:
-    needs: [lint, test]
-    name: Create release branch
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Create release branch
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+  # create_release_branch:
+  #   needs: [lint, test]
+  #   name: Create release branch
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Create release branch
+  #       run: |
+  #         git config --global user.name "github-actions[bot]"
+  #         git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          RELEASE_BRANCH="releases/${{ github.run_number }}"
+  #         RELEASE_BRANCH="releases/${{ github.run_number }}"
 
-          git checkout -b $RELEASE_BRANCH
-          git push origin $RELEASE_BRANCH
+  #         git checkout -b $RELEASE_BRANCH
+  #         git push origin $RELEASE_BRANCH
 
-  build_docker_image:
-    needs: [create_release_branch]
-    name: Build docker image
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # build_docker_image:
+  #   needs: [create_release_branch]
+  #   name: Build docker image
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Yandex cloud auth
-        run: docker login --username oauth --password ${{ secrets.YA_CR_OAUTH_TOKEN }} cr.yandex
+  #     - name: Yandex cloud auth
+  #       run: docker login --username oauth --password ${{ secrets.YA_CR_OAUTH_TOKEN }} cr.yandex
 
-      - name: Build docker image
-        run: docker build . -t cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
+  #     - name: Build docker image
+  #       run: docker build . -t cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
 
-      - name: Tag docker image
-        run: docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+  #     - name: Tag docker image
+  #       run: docker tag cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
-      - name: Push docker image
-        run: |
-          docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
-          docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+  #     - name: Push docker image
+  #       run: |
+  #         docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}
+  #         docker push cr.yandex/${{ secrets.YA_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
-  create_github_tag:
-    runs-on: ubuntu-latest
-    needs: [build_docker_image]
-    steps:
-      - uses: actions/checkout@v4
+  # create_github_tag:
+  #   runs-on: ubuntu-latest
+  #   needs: [build_docker_image]
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Create github tag
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+  #     - name: Create github tag
+  #       run: |
+  #         git config --global user.name "github-actions[bot]"
+  #         git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          TAG_NAME="v${{ github.run_number }}"
+  #         TAG_NAME="v${{ github.run_number }}"
 
-          git tag -a $TAG_NAME -m "Tag created by GitHub Actions"
-          git push origin $TAG_NAME
+  #         git tag -a $TAG_NAME -m "Tag created by GitHub Actions"
+  #         git push origin $TAG_NAME
 
   create_github_issue:
     runs-on: ubuntu-latest
-    needs: [create_github_tag]
+    needs: [lint, test]
     steps:
       - uses: actions/checkout@v4
 
@@ -98,72 +98,85 @@ jobs:
       
       - name: Get commit history
         run: |
-          if [ -n "${{ env.latest_tag }}" ]; then
-            if [ -n "${{ env.prev_tag }}" ]; then
-              commit_history=$(git log "${{ env.prev_tag }}"..${{ env.latest_tag }} --pretty=format:"- %h: %s")
+          if [ ! -z "$latest_tag" ]; then
+            if [ -z "$prev_tag" ]; then
+              commit_history=$(git log --all --oneline --pretty=format:"* %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" $latest_tag)
             else
-              commit_history=$(git log --pretty=format:"- %h: %s" "${{ env.latest_tag }}")
+              commit_history=$(git log --all --oneline --pretty=format:"* %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" $previous_tag..$latest_tag)
             fi
-          else
-            commit_history=$(git log --pretty=format:"- %h: %s")
-          fi
-          echo "commit_history=${commit_history}" >> $GITHUB_ENV
+            echo "commit_history=${commit_history}" >> $GITHUB_ENV
+            
+      - name: Output commit history
+        run: |
+          echo "Commit history:"
+          echo "${{ env.commit_history }}"
 
-      - name: Create github issue
-        uses: dacbd/create-issue-action@main
+  #         if [ -n "${{ env.latest_tag }}" ]; then
+  #           if [ -n "${{ env.prev_tag }}" ]; then
+  #             commit_history=$(git log "${{ env.prev_tag }}"..${{ env.latest_tag }} --pretty=format:"- %h: %s")
+  #           else
+  #             commit_history=$(git log --pretty=format:"- %h: %s" "${{ env.latest_tag }}")
+  #           fi
+  #         else
+  #           commit_history=$(git log --pretty=format:"- %h: %s")
+  #         fi
+  #         echo "commit_history=${commit_history}" >> $GITHUB_ENV
+
+  #     - name: Create github issue
+  #       uses: dacbd/create-issue-action@main
         
-        with:
-          token: ${{ github.token }}
-          title: Release ${{ github.run_number }}
-          body: |
-            - Date: ${{ env.date }}
-            - Release author: ${{ github.triggering_actor }}
-            - Release version: ${{ github.run_number }}
-            - Commits history:
-              ${{ env.commit_history }}
-            - Docker: cr.yandex/${{secrets.YC_REGISTRY_ID}}/app:${{ github.run_number }}
+  #       with:
+  #         token: ${{ github.token }}
+  #         title: Release ${{ github.run_number }}
+  #         body: |
+  #           - Date: ${{ env.date }}
+  #           - Release author: ${{ github.triggering_actor }}
+  #           - Release version: ${{ github.run_number }}
+  #           - Commits history:
+  #             ${{ env.commit_history }}
+  #           - Docker: cr.yandex/${{secrets.YC_REGISTRY_ID}}/app:${{ github.run_number }}
 
-  update-release:
-    runs-on: ubuntu-latest
-    needs: [create_github_issue]
-    steps:
-      - uses: actions/checkout@v4
+  # update-release:
+  #   runs-on: ubuntu-latest
+  #   needs: [create_github_issue]
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Get previous tag
-        run: |
-          prev_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')
-          echo "prev_tag=${prev_tag}" >> $GITHUB_ENV
+  #     - name: Get previous tag
+  #       run: |
+  #         prev_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')
+  #         echo "prev_tag=${prev_tag}" >> $GITHUB_ENV
       
-      - name: Get commit history
-        run: |
-          if [ -n "${{ env.prev_tag }}" ]; then
-            commit_history=$(git log "${{ env.prev_tag }}"..HEAD --pretty=format:"- %h: %s")
-          else
-            commit_history=$(git log HEAD --pretty=format:"- %h: %s")
-          fi
-          echo "commit_history=${commit_history}" >> $GITHUB_ENV
+  #     - name: Get commit history
+  #       run: |
+  #         if [ -n "${{ env.prev_tag }}" ]; then
+  #           commit_history=$(git log "${{ env.prev_tag }}"..HEAD --pretty=format:"- %h: %s")
+  #         else
+  #           commit_history=$(git log HEAD --pretty=format:"- %h: %s")
+  #         fi
+  #         echo "commit_history=${commit_history}" >> $GITHUB_ENV
 
-      - name: Update changelog
-        run: |
-          echo "## Release ${{ github.run_number }}" > updated_changelog.md
-          echo "${{ env.commit_history }}" >> updated_changelog.md
-          cat CHANGELOG.md >> updated_changelog.md
-          mv updated_changelog.md CHANGELOG.md
+  #     - name: Update changelog
+  #       run: |
+  #         echo "## Release ${{ github.run_number }}" > updated_changelog.md
+  #         echo "${{ env.commit_history }}" >> updated_changelog.md
+  #         cat CHANGELOG.md >> updated_changelog.md
+  #         mv updated_changelog.md CHANGELOG.md
 
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+  #         git config --global user.name "github-actions[bot]"
+  #         git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          RELEASE_BRANCH="releases/${{ github.run_number }}"
+  #         RELEASE_BRANCH="releases/${{ github.run_number }}"
 
-          git add CHANGELOG.md
-          git commit -m "Update changelog ${{ github.run_number }}"
+  #         git add CHANGELOG.md
+  #         git commit -m "Update changelog ${{ github.run_number }}"
           
-          git checkout -b $RELEASE_BRANCH
-          git push origin $RELEASE_BRANCH
+  #         git checkout -b $RELEASE_BRANCH
+  #         git push origin $RELEASE_BRANCH
 
-          echo "${{ secrets.PAT }}" | gh auth login --with-token
-          gh pr create --title "Update CHANGELOG.md for release ${{ github.run_number }}" --body "This PR updates the CHANGELOG.md for release ${{ github.run_number }}" --head $RELEASE_BRANCH --base main
+  #         echo "${{ secrets.PAT }}" | gh auth login --with-token
+  #         gh pr create --title "Update CHANGELOG.md for release ${{ github.run_number }}" --body "This PR updates the CHANGELOG.md for release ${{ github.run_number }}" --head $RELEASE_BRANCH --base main
 
-          PR_NUMBER=$(gh pr list --head $RELEASE_BRANCH --json number -q '.[0].number')
+  #         PR_NUMBER=$(gh pr list --head $RELEASE_BRANCH --json number -q '.[0].number')
 
-          gh pr merge $PR_NUMBER --admin --squash --delete-branch
+  #         gh pr merge $PR_NUMBER --admin --squash --delete-branch
